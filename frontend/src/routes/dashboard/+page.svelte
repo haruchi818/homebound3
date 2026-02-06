@@ -32,12 +32,8 @@
   let socket: WebSocket | null = null;
 
   const appIcons = [
-    { id: "a1", label: "Calendar" },
-    { id: "a2", label: "Files" },
-    { id: "a3", label: "Notes" },
-    { id: "a4", label: "Tasks" },
-    { id: "a5", label: "Studio" },
-    { id: "a6", label: "Insights" }
+    { id: "watchtogether", label: "WatchTogether" },
+    { id: "ebook-library", label: "Ebook Library" }
   ];
 
   let people = $state<PresenceUser[]>([]);
@@ -204,7 +200,6 @@
     <section class="desktop surface">
       <div class="desktop-head">
         <h3 class="section-title">Desktop apps</h3>
-        <button class="action-btn" type="button">Add application</button>
       </div>
       <div class="icon-grid">
         {#each appIcons as app}
@@ -430,8 +425,8 @@
   }
 
   .icon-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 18px;
   }
 
@@ -439,12 +434,17 @@
     background: var(--md-sys-color-surface-container-high);
     border: none;
     border-radius: 20px;
-    padding: 20px;
-    text-align: left;
-    display: grid;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     gap: 12px;
     font-weight: 600;
     cursor: pointer;
+    width: min(150px, 30vw);
+    aspect-ratio: 1 / 1;
+    text-align: center;
   }
 
   .icon-mark {
@@ -703,6 +703,29 @@
 
     .chat-body {
       grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .dashboard {
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      padding: 2vh 4vw 3vh;
+    }
+
+    .top-bar,
+    .bottom-bar {
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 12px 16px;
+    }
+
+    .top-actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .icon-grid {
+      justify-content: center;
     }
   }
 </style>

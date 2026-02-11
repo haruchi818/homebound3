@@ -1,0 +1,19 @@
+{
+  auto_https off
+}
+
+http://localhost {
+  encode gzip
+
+  @api path /api/*
+  reverse_proxy @api backend:8080
+
+  @ws path /ws/*
+  reverse_proxy @ws backend:8080
+
+  @hls path /hls/*
+  header @hls Cache-Control "public, max-age=60"
+  reverse_proxy @hls backend:8080
+
+  reverse_proxy frontend:5173
+}

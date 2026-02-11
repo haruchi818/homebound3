@@ -1,0 +1,67 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: homebound
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      BIND_ADDR: 0.0.0.0:8080
+      FRONTEND_URL: http://localhost
+      SESSION_KEY: replace-with-64-byte-minimum-secret-replace-with-64-byte-minimum-secret
+      SESSION_SECURE: "false"
+      DATABASE_URL: postgres://postgres:postgres@db:5432/homebound
+      MEDIA_ORIGINALS_PATH: /var/media/originals
+      MEDIA_HLS_PATH: /var/media/hls
+      MEDIA_THUMBNAILS_PATH: /var/media/thumbnails
+      MEDIA_SUBTITLES_PATH: /var/media/subtitles
+      MEDIA_UPLOAD_TMP_PATH: /var/media/uploads
+      MAX_UPLOAD_GB: "10"
+      ALLOWED_VIDEO_FORMATS: mp4,mkv,avi,mov,webm
+      FFMPEG_PATH: /usr/bin/ffmpeg
+      GOOGLE_CLIENT_ID: none
+      GOOGLE_CLIENT_SECRET: none
+      GOOGLE_REDIRECT_URL: http://localhost/api/auth/google/callback      
+    volumes:
+      - media_data:/var/media
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      VITE_API_BASE: http://localhost
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+
+volumes:
+  db_data:
+  media_data:
+  caddy_data:
+  caddy_config:

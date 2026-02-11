@@ -11,7 +11,7 @@
   aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
   title={isDark ? "Switch to light mode" : "Switch to dark mode"}
   type="button"
-  on:click={toggleTheme}
+  onclick={toggleTheme}
 >
   <span class="track"></span>
   <span class="thumb"></span>

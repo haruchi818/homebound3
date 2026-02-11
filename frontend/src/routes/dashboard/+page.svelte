@@ -1,10 +1,11 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import { goto } from "$app/navigation";
-  import { refreshSession, signOut, user, type UserProfile } from "$lib/stores/auth";
+  import { refreshSession, signOut, user } from "$lib/stores/auth";
+  import { apiUrl, wsUrl } from "$lib/api";
   import ThemeToggle from "$lib/components/ui/ThemeToggle.svelte";
+  import Avatar from "$lib/components/ui/Avatar.svelte";
 
-  const API_BASE = import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8080";
 
   type PresenceUser = {
     id: string;
@@ -59,16 +60,6 @@
     goto("/");
   }
 
-  function initialsFromUser(profile: UserProfile | null) {
-    if (!profile?.displayName) return "U";
-    return profile.displayName
-      .split(" ")
-      .map((part) => part[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase();
-  }
-
   function initialsFromName(name: string) {
     return name
       .split(" ")
@@ -86,7 +77,7 @@
   }
 
   async function loadUsers() {
-    const response = await fetch(`${API_BASE}/api/users`, {
+    const response = await fetch(apiUrl("/api/users"), {
       credentials: "include",
     });
 
@@ -97,7 +88,7 @@
   }
 
   async function loadHistory(userId: string) {
-    const response = await fetch(`${API_BASE}/api/messages/${userId}`, {
+    const response = await fetch(apiUrl(`/api/messages/${userId}`), {
       credentials: "include",
     });
 
@@ -107,8 +98,7 @@
   }
 
   function connectSocket() {
-    const wsUrl = `${API_BASE.replace("http", "ws")}/api/ws`;
-    socket = new WebSocket(wsUrl);
+    socket = new WebSocket(wsUrl("/api/ws"));
 
     socket.onmessage = (event) => {
       const payload = JSON.parse(event.data) as { type: string; data: any };
@@ -146,6 +136,13 @@
     }
   }
 
+  function openApp(appId: string) {
+    if (appId === "watchtogether") {
+      goto("/streams");
+      return;
+    }
+  }
+
   function sendMessage() {
     const trimmed = messageText.trim();
     if (!trimmed || !activeChatId) return;
@@ -180,14 +177,18 @@
     <div class="top-actions">
       <button class="icon-btn" type="button">+ Add app</button>
       <div class="avatar-area">
-        <button class="avatar" on:click={() => (showMenu = !showMenu)} type="button">
-          {initialsFromUser(currentUser)}
+        <button class="avatar-btn" onclick={() => (showMenu = !showMenu)} type="button">
+          <Avatar
+            name={currentUser?.displayName ?? ""}
+            src={currentUser?.avatarUrl ?? ""}
+            size={44}
+          />
         </button>
         {#if showMenu}
           <div class="menu surface">
             <p class="menu-title">Signed in</p>
             <p class="menu-name">{currentUser?.displayName}</p>
-            <button class="action-btn secondary" on:click={handleLogout} type="button">
+            <button class="action-btn secondary" onclick={handleLogout} type="button">
               Logout
             </button>
           </div>
@@ -203,7 +204,7 @@
       </div>
       <div class="icon-grid">
         {#each appIcons as app}
-          <button class="icon" type="button">
+          <button class="icon" type="button" onclick={() => openApp(app.id)}>
             <span class="icon-mark">{app.label.slice(0, 1)}</span>
             <span>{app.label}</span>
           </button>
@@ -219,7 +220,7 @@
             <p class="online-count">{onlineCount} online</p>
           </div>
           {#if activeChatId}
-            <button class="icon-btn" type="button" on:click={closeChatView}>
+            <button class="icon-btn" type="button" onclick={closeChatView}>
               Back to list
             </button>
           {/if}
@@ -230,7 +231,7 @@
               <div class="user-row">
                 <button
                   class:active={person.id === activeChatId}
-                  on:click={() => openChat(person)}
+                  onclick={() => openChat(person)}
                   type="button"
                 >
                   <span class="avatar-badge">
@@ -250,7 +251,7 @@
                   <div class="chat-inline">
                     <div class="chat-title">
                       <span class="chat-name">{person.displayName}</span>
-                      <button class="icon-btn" type="button" on:click={closeChatView}>
+                      <button class="icon-btn" type="button" onclick={closeChatView}>
                         <span class="material-symbols-rounded">undo</span>
                       </button>
                     </div>
@@ -271,9 +272,9 @@
                         type="text"
                         placeholder="Type a message"
                         bind:value={messageText}
-                        on:keydown={(event) => event.key === "Enter" && sendMessage()}
+                        onkeydown={(event) => event.key === "Enter" && sendMessage()}
                       />
-                      <button class="action-btn" type="button" on:click={sendMessage}>Send</button>
+                      <button class="action-btn" type="button" onclick={sendMessage}>Send</button>
                     </div>
                   </div>
                 {/if}
@@ -286,11 +287,11 @@
   </main>
 
   <footer class="bottom-bar surface">
-    <button class="icon-btn" type="button" on:click={() => (showSettings = !showSettings)}>
+    <button class="icon-btn" type="button" onclick={() => (showSettings = !showSettings)}>
       Settings
     </button>
     <div class="bottom-actions">
-      <button class="action-btn" type="button" on:click={toggleChatPanel}>
+      <button class="action-btn" type="button" onclick={toggleChatPanel}>
         {chatOpen ? "Close Chat" : "Chat"}
       </button>
       <ThemeToggle />
@@ -364,14 +365,10 @@
     position: relative;
   }
 
-  .avatar {
-    height: 44px;
-    width: 44px;
-    border-radius: 50%;
+  .avatar-btn {
     border: none;
-    background: var(--md-sys-color-primary);
-    color: var(--md-sys-color-on-primary);
-    font-weight: 700;
+    background: transparent;
+    padding: 0;
     cursor: pointer;
   }
 

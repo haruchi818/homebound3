@@ -5,9 +5,7 @@
 	import Button from "$lib/components/ui/Button.svelte";
 	import ThemeToggle from "$lib/components/ui/ThemeToggle.svelte";
 
-	let busy = false;
-
-	$: isAuthed = $user !== null;
+	let busy = $state(false);
 
 	onMount(async () => {
 		const session = await refreshSession();
@@ -39,7 +37,7 @@
 		<div class="login-right">
 			<p class="section-title">Welcome back</p>
 			<p class="subtext">Google sign-in only. Sessions expire automatically.</p>
-			<button class="action-btn" on:click={handleLogin} disabled={busy}>
+			<button class="action-btn" onclick={handleLogin} disabled={busy}>
 				Continue with Google
 			</button>
 			<Button variant="secondary" type="button">Learn about privacy</Button>
